@@ -1,17 +1,18 @@
 import type {ProSettings} from '@ant-design/pro-components';
 import {PageContainer, ProCard, ProLayout, SettingDrawer,} from '@ant-design/pro-components';
-import {Button} from 'antd';
-import React, {useState} from 'react';
+import React, {useState, Component} from 'react';
 import defaultProps from './_defaultProps';
-export default () => {
+import {Link} from 'umi';
+
+export default function BaseLayout(props: { children: any; }) {
   const [settings, setSetting] = useState<Partial<ProSettings> | undefined>({
-    fixSiderbar: true,
-    layout: 'mix',
-    splitMenus: true,
+    layout: 'side',
   });
 
-  const [pathname, setPathname] = useState('/list/sub-page/sub-sub-page1');
-  const [num, setNum] = useState(40);
+  const [pathname] = useState('/list/sub-page/sub-sub-page1');
+  const [num] = useState(40);
+  const {children} = props;
+
   return (
     <div
       id="test-pro-layout"
@@ -20,6 +21,7 @@ export default () => {
       }}
     >
       <ProLayout
+        title="DDNS General"
         prefixCls="my-prefix"
         bgLayoutImgList={[
           {
@@ -45,7 +47,6 @@ export default () => {
         location={{
           pathname,
         }}
-        siderMenuType="group"
         menu={{
           collapsedShowGroupTitle: true,
         }}
@@ -56,26 +57,17 @@ export default () => {
         }}
         actionsRender={(props) => {
           if (props.isMobile) return [];
-          return [
-          ];
+          return [];
         }}
         headerTitleRender={(logo, title, _) => {
-          const defaultDom = (
-            <a>
-              {logo}
-              {title}
-            </a>
-          );
+          const defaultDom = (<a>{logo}{title}</a>);
           if (document.body.clientWidth < 1400) {
             return defaultDom;
           }
           if (_.isMobile) return defaultDom;
-          return (
-            <>
-              {defaultDom}
-            </>
-          );
+          return (<>{defaultDom}</>);
         }}
+        // 左下角渲染器
         menuFooterRender={(props) => {
           if (props?.collapsed) return undefined;
           return (
@@ -86,19 +78,17 @@ export default () => {
               }}
             >
               <div>© 2021 Made with love</div>
-              <div>by Ant Design</div>
+              <div>by BellerSun （AntD）</div>
             </div>
           );
         }}
         onMenuHeaderClick={(e) => console.log(e)}
         menuItemRender={(item, dom) => (
-          <div
-            onClick={() => {
-              setPathname(item.path || '/welcome');
-            }}
-          >
-            {dom}
-          </div>
+          <Link to={item.path}>
+            <div>
+              {dom}
+            </div>
+          </Link>
         )}
         {...settings}
       >
@@ -106,26 +96,6 @@ export default () => {
           token={{
             paddingInlinePageContainerContent: num,
           }}
-          extra={[
-            <Button key="3">操作</Button>,
-            <Button key="2">操作</Button>,
-            <Button
-              key="1"
-              type="primary"
-              onClick={() => {
-                setNum(num > 0 ? 0 : 40);
-              }}
-            >
-              主操作
-            </Button>,
-          ]}
-          subTitle="简单的描述"
-          footer={[
-            <Button key="3">重置</Button>,
-            <Button key="2" type="primary">
-              提交
-            </Button>,
-          ]}
         >
           <ProCard
             style={{
@@ -133,7 +103,9 @@ export default () => {
               minHeight: 800,
             }}
           >
-            <div />
+            <div>
+              {children}
+            </div>
           </ProCard>
         </PageContainer>
 
@@ -143,6 +115,7 @@ export default () => {
           getContainer={() => document.getElementById('test-pro-layout')}
           settings={settings}
           onSettingChange={(changeSetting) => {
+            debugger
             setSetting(changeSetting);
           }}
           disableUrlParams={false}
