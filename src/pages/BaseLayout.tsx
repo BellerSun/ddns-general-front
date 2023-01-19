@@ -1,6 +1,6 @@
 import type {ProSettings} from '@ant-design/pro-components';
 import {PageContainer, ProCard, ProLayout, SettingDrawer,} from '@ant-design/pro-components';
-import React, {useState, Component} from 'react';
+import React, {useState} from 'react';
 import defaultProps from './_defaultProps';
 import {Link} from 'umi';
 import {GithubFilled} from "@ant-design/icons";
@@ -122,7 +122,6 @@ export default function BaseLayout(props: { children: any; }) {
           getContainer={() => document.getElementById('test-pro-layout')}
           settings={settings}
           onSettingChange={(changeSetting) => {
-            debugger
             setSetting(changeSetting);
           }}
           disableUrlParams={false}
