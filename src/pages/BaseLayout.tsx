@@ -3,8 +3,11 @@ import {PageContainer, ProCard, ProLayout, SettingDrawer,} from '@ant-design/pro
 import React, {useState, Component} from 'react';
 import defaultProps from './_defaultProps';
 import {Link} from 'umi';
+import {GithubFilled} from "@ant-design/icons";
 
 export default function BaseLayout(props: { children: any; }) {
+
+  const github_url = 'https://github.com/BellerSun/ddns-general-front';
   const [settings, setSetting] = useState<Partial<ProSettings> | undefined>({
     layout: 'side',
   });
@@ -57,7 +60,11 @@ export default function BaseLayout(props: { children: any; }) {
         }}
         actionsRender={(props) => {
           if (props.isMobile) return [];
-          return [];
+          return [
+            <GithubFilled key="GithubFilled" onClick={() => {
+              window.open(github_url, '_blank')
+            }}/>,
+          ];
         }}
         headerTitleRender={(logo, title, _) => {
           const defaultDom = (<a>{logo}{title}</a>);
