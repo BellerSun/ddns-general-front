@@ -92,8 +92,7 @@ class DdnsConfigForm extends Component<any, any> {
           }}
           placeholder="请选择云服务商类型"
           rules={[{required: true, message: '请选择解析记录类型!'}]}
-          fieldProps={{defaultValue: "A"}}
-          initialValue={realFields && realFields.ddnsDomainRecordType}
+          initialValue={(realFields && realFields.ddnsDomainRecordType) || "A"}
         />
 
 
@@ -107,16 +106,14 @@ class DdnsConfigForm extends Component<any, any> {
           }}
           placeholder="请选择云服务商类型"
           rules={[{required: true, message: '请选择云服务商类型!'}]}
-          fieldProps={{defaultValue: "TENCENT"}}
-          initialValue={realFields && realFields.dnsServerType}
+          initialValue={(realFields && realFields.dnsServerType) || "TENCENT"}
         />
 
         <ProFormText name="dnsServerParam"
                      label="服务商验证配置"
                      placeholder="请输入服务商验证配置"
                      rules={[{required: true, message: '请输入服务商验证配置!'}]}
-                     fieldProps={{defaultValue: "{}"}}
-                     initialValue={realFields && realFields.dnsServerParam}
+                     initialValue={(realFields && realFields.dnsServerParam) || "{}"}
         />
 
         <ProFormDigit name="ddnsRecordAliveTime"
@@ -124,7 +121,7 @@ class DdnsConfigForm extends Component<any, any> {
                       min={1000} max={3600000}
                       fieldProps={{step: 1, defaultValue: 60000}}
                       rules={[{required: true, message: '请输入服务商记录缓存时间!'}]}
-                      initialValue={realFields && realFields.ddnsRecordAliveTime}
+                      initialValue={(realFields && realFields.ddnsRecordAliveTime) || 60000}
 
         />
 
@@ -132,19 +129,13 @@ class DdnsConfigForm extends Component<any, any> {
                      label="任务刷新周期Cron表达式"
                      placeholder="请输入任务刷新周期Cron表达式"
                      rules={[{required: true, message: '请输入任务刷新周期Cron表达式!'}]}
-                     fieldProps={{defaultValue: "0 0/1 * * * ? "}}
-                     initialValue={realFields && realFields.schedulerCron}
+                     initialValue={(realFields && realFields.schedulerCron) || "0 0/1 * * * ? "}
         />
 
         <ProFormSwitch
           name="activate"
           label="启动任务"
-
-
-          fieldProps={{
-            checked: false,
-          }}
-          initialValue={realFields && realFields.activate}
+          initialValue={(realFields && realFields.activate) || false}
         />
       </ModalForm>
     );
