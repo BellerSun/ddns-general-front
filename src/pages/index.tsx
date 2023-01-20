@@ -1,8 +1,8 @@
 import React from "react";
-import WelcomePage from "@/pages/welcome";
+import BaseLayoutPage from "@/pages/BaseLayout";
 
 export default function IndexPage() {
   return (
-    <WelcomePage/>
+    <BaseLayoutPage />
   );
 }

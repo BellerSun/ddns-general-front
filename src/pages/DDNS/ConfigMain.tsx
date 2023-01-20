@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import BaseLayout from "@/pages/BaseLayout";
 import axios from "axios";
 
 import {ProColumns, ProTable} from '@ant-design/pro-components';
@@ -11,7 +10,7 @@ const axiosInstance = axios.create({
   timeout: 1000
 });
 
-class ConfigMainPage extends Component<any, any> {
+class ConfigMain extends Component<any, any> {
 
   state = {ddnsConfigList: []}
 
@@ -23,6 +22,12 @@ class ConfigMainPage extends Component<any, any> {
     this.refreshTable();
   }
 
+  componentWillUnmount() {
+    this.setState = (state, callback) => {
+      return;
+    }
+  }
+
   refreshTable() {
     axiosInstance.get("manager/ddnsConfig/queryAll", {})
       .then(resp => {
@@ -31,29 +36,27 @@ class ConfigMainPage extends Component<any, any> {
       })
       .catch(e => {
         console.log(e)
-      })
+      });
   }
 
   render() {
     const {ddnsConfigList} = this.state;
     return (
-      <BaseLayout>
-        <div>
-          <ProTable<DDNSConfigItem>
-            dataSource={ddnsConfigList}
-            rowKey="key"
-            pagination={{showQuickJumper: true,}}
-            columns={columns}
-            search={false}
-            dateFormatter="string"
-            headerTitle="配置列表"
-            toolBarRender={() => [
-              <Button key="refreshConfig" onClick={()=> this.refreshTable()}>刷新配置</Button>,
-              <Button key="addConfig">新增配置</Button>,
-            ]}
-          />
-        </div>
-      </BaseLayout>
+      <div>
+        <ProTable<DDNSConfigItem>
+          dataSource={ddnsConfigList}
+          rowKey={record => record.ddnsConfigKey.domainName + record.ddnsConfigKey.domainSubName}
+          pagination={{showQuickJumper: true,}}
+          columns={columns}
+          search={false}
+          dateFormatter="string"
+          headerTitle="配置列表"
+          toolBarRender={() => [
+            <Button key="refreshConfig" onClick={() => this.refreshTable()}>刷新配置</Button>,
+            <Button key="addConfig">新增配置</Button>,
+          ]}
+        />
+      </div>
     );
   }
 }
@@ -129,6 +132,6 @@ const columns: ProColumns<DDNSConfigItem>[] = [
   },
 ];
 
-export default function Page() {
-  return <ConfigMainPage/>;
+export default function ConfigMainPage() {
+  return <ConfigMain/>;
 }
