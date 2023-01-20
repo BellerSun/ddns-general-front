@@ -1,18 +1,19 @@
-import axios from "axios";
 import {ProColumns, ProTable} from "@ant-design/pro-components";
 import {DDNSConfigItem, DDNSConfigKey} from "@/obj/DDNSConfigItem";
-import {Button, message, Switch} from "antd";
+import {Button, message, Popconfirm, Switch} from "antd";
 import React, {Component} from "react";
 import BaseLayout from "@/pages/BaseLayout";
-
-const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3364/api/',
-  timeout: 5000
-});
+import DdnsConfigForm from "@/components/ddnsConfig/DDNSConfigForm";
+import DdnsConfigManageService from "@/service/DDNSConfigManageService";
 
 export class ConfigMainComponent extends Component<any, any> {
 
-  state = {ddnsConfigList: []}
+  state = {
+    ddnsConfigList: [],
+    modalShow: false,
+    modalType: 'add',
+    modalRecord: {}
+  }
 
   constructor(props: any, context: any) {
     super(props, context);
@@ -23,18 +24,17 @@ export class ConfigMainComponent extends Component<any, any> {
   }
 
   refreshTable() {
-    axiosInstance.get("manager/ddnsConfig/queryAll", {})
-      .then(resp => {
-        const results = resp && resp.data;
-        this.setState({ddnsConfigList: results});
-      })
+    DdnsConfigManageService.queryAll().then(resp => {
+      const results = resp && resp.data;
+      this.setState({ddnsConfigList: results});
+    })
       .catch(e => {
         console.log(e)
       })
   }
 
   removeConfig(key: DDNSConfigKey) {
-    axiosInstance.postForm("manager/ddnsConfig/remove", key)
+    DdnsConfigManageService.remove(key)
       .then(() => {
         message.success('删除成功').then();
         this.refreshTable();
@@ -45,8 +45,33 @@ export class ConfigMainComponent extends Component<any, any> {
       })
   }
 
+  saveConfig(record: DDNSConfigItem) {
+    DdnsConfigManageService.save(record)
+      .then(() => {
+        message.success('状态修改成功').then();
+        this.refreshTable();
+      })
+      .catch(e => {
+        message.error('状态修改失败！').then();
+        console.log(e)
+      })
+  }
+
+  /**
+   * 给子组件回调使用的，调整弹窗是否展示
+   * @param open 是否展示弹窗
+   * @param refresh 是否刷新外层表格
+   */
+  changeModalOpen = (open: boolean, refresh: boolean = false) => {
+    this.setState({modalShow: open});
+
+    if (refresh) {
+      this.refreshTable();
+    }
+  }
+
   render() {
-    const {ddnsConfigList} = this.state;
+    const {ddnsConfigList, modalShow, modalType, modalRecord} = this.state;
     return (
       <BaseLayout>
         <div>
@@ -60,10 +85,21 @@ export class ConfigMainComponent extends Component<any, any> {
             headerTitle="配置列表"
             toolBarRender={() => [
               <Button key="refreshConfig" onClick={() => this.refreshTable()}>刷新配置</Button>,
-              <Button key="addConfig">新增配置</Button>,
+              <Button key="addConfig"
+                      onClick={() => this.setState({
+                        modalShow: true,
+                        modalType: 'add',
+                        modalRecord: {}
+                      })}>新增配置</Button>,
             ]}
           />
         </div>
+
+        <DdnsConfigForm modalShow={modalShow}
+                        modalType={modalType}
+                        changeShow={this.changeModalOpen}
+                        fromFields={modalRecord}
+        />
       </BaseLayout>
     );
   }
@@ -119,11 +155,17 @@ export class ConfigMainComponent extends Component<any, any> {
       title: '启动状态',
       width: 80,
       dataIndex: 'activate',
-      render: (_, item) => <Switch checked={item.activate}/>,
+      render: (_, item) => <Switch checked={item.activate}
+                                   onChange={(newActivate, b) => {
+                                     item.activate = newActivate;
+                                     this.saveConfig(item);
+                                   }}
+      />,
       valueEnum: {
         true: {text: '启动'},
         false: {text: '停止'},
       },
+
     },
     {
       title: '操作',
@@ -132,12 +174,23 @@ export class ConfigMainComponent extends Component<any, any> {
       valueType: 'option',
       render: (_, item) => [
         //todo 待实现逻辑
-        <a key="link">修改</a>,
-        //todo 待实现逻辑
-        <a key="link2" onClick={() => {
-          this.removeConfig(item.ddnsConfigKey);
-        }
-        }>删除</a>,
+        <a key="update"
+           onClick={() => this.setState({modalShow: true, modalType: 'update', modalRecord: item})}
+        >修改</a>,
+
+
+        <Popconfirm
+          title="删除任务配置"
+          description="😯你确定要删除吗?不可恢复喔~"
+          onConfirm={() => {
+            this.removeConfig(item.ddnsConfigKey);
+          }}
+          okText="删除"
+          okButtonProps={{danger: true}}
+          cancelText="算了~"
+        >
+          <a href="#" key="remove">删除</a>
+        </Popconfirm>
       ],
     },
   ];
