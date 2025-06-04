@@ -1,10 +1,11 @@
 import React from 'react';
 import axios from 'axios/index';
 import { IPCheckerConfigItem } from '@/obj/IPCheckerConfigItem';
+import { API_CONFIG } from '@/config/api.config';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3364/api/',
-  timeout: 5000,
+  baseURL: API_CONFIG.baseURL,
+  timeout: API_CONFIG.timeout,
 });
 
 /**
