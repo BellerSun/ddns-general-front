@@ -25,6 +25,10 @@ class DdnsConfigManageService {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  public static async runNow(key: DDNSConfigKey) {
+    return axiosInstance.postForm('manager/ddnsConfig/runNow', key);
+  }
 }
 
 export default DdnsConfigManageService;

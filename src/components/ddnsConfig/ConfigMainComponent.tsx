@@ -1,19 +1,19 @@
-import {ProColumns, ProTable} from "@ant-design/pro-components";
-import {DDNSConfigItem, DDNSConfigKey} from "@/obj/DDNSConfigItem";
-import {Button, message, Popconfirm, Switch} from "antd";
-import React, {Component} from "react";
-import BaseLayout from "@/pages/BaseLayout";
-import DdnsConfigForm from "@/components/ddnsConfig/DDNSConfigForm";
-import DdnsConfigManageService from "@/service/DDNSConfigManageService";
+import { ProColumns, ProTable } from '@ant-design/pro-components';
+import { DDNSConfigItem, DDNSConfigKey } from '@/obj/DDNSConfigItem';
+import { Button, message, Popconfirm, Switch, Tooltip } from 'antd';
+import React, { Component } from 'react';
+import BaseLayout from '@/pages/BaseLayout';
+import DdnsConfigForm from '@/components/ddnsConfig/DDNSConfigForm';
+import DdnsConfigManageService from '@/service/DDNSConfigManageService';
+import { PlayCircleOutlined } from '@ant-design/icons';
 
 export class ConfigMainComponent extends Component<any, any> {
-
   state = {
     ddnsConfigList: [],
     modalShow: false,
     modalType: 'add',
-    modalRecord: {}
-  }
+    modalRecord: {},
+  };
 
   constructor(props: any, context: any) {
     super(props, context);
@@ -24,13 +24,14 @@ export class ConfigMainComponent extends Component<any, any> {
   }
 
   refreshTable() {
-    DdnsConfigManageService.queryAll().then(resp => {
-      const results = resp && resp.data;
-      this.setState({ddnsConfigList: results});
-    })
-      .catch(e => {
-        console.log(e)
+    DdnsConfigManageService.queryAll()
+      .then((resp) => {
+        const results = resp && resp.data;
+        this.setState({ ddnsConfigList: results });
       })
+      .catch((e) => {
+        console.log(e);
+      });
   }
 
   removeConfig(key: DDNSConfigKey) {
@@ -39,10 +40,10 @@ export class ConfigMainComponent extends Component<any, any> {
         message.success('删除成功').then();
         this.refreshTable();
       })
-      .catch(e => {
+      .catch((e) => {
         message.error('删除失败').then();
-        console.log(e)
-      })
+        console.log(e);
+      });
   }
 
   saveConfig(record: DDNSConfigItem) {
@@ -51,10 +52,25 @@ export class ConfigMainComponent extends Component<any, any> {
         message.success('状态修改成功').then();
         this.refreshTable();
       })
-      .catch(e => {
+      .catch((e) => {
         message.error('状态修改失败！').then();
-        console.log(e)
+        console.log(e);
+      });
+  }
+
+  /**
+   * 立即运行DDNS配置
+   * @param key DDNS配置的key
+   */
+  runNowConfig(key: DDNSConfigKey) {
+    DdnsConfigManageService.runNow(key)
+      .then(() => {
+        message.success('立即运行成功！').then();
       })
+      .catch((e) => {
+        message.error('立即运行失败！').then();
+        console.log(e);
+      });
   }
 
   /**
@@ -63,58 +79,62 @@ export class ConfigMainComponent extends Component<any, any> {
    * @param refresh 是否刷新外层表格
    */
   changeModalOpen = (open: boolean, refresh: boolean = false) => {
-    this.setState({modalShow: open});
+    this.setState({ modalShow: open });
 
     if (refresh) {
       this.refreshTable();
     }
-  }
+  };
 
   render() {
-    const {ddnsConfigList, modalShow, modalType, modalRecord} = this.state;
+    const { ddnsConfigList, modalShow, modalType, modalRecord } = this.state;
     return (
       <BaseLayout>
         <div>
           <ProTable<DDNSConfigItem>
             dataSource={ddnsConfigList}
-            rowKey={item => item.ddnsConfigKey.domainName + '_' + item.ddnsConfigKey.domainSubName}
-            pagination={{showQuickJumper: true,}}
+            rowKey={(item) =>
+              item.ddnsConfigKey.domainName +
+              '_' +
+              item.ddnsConfigKey.domainSubName
+            }
+            pagination={{ showQuickJumper: true }}
             columns={this.columns}
             search={false}
             dateFormatter="string"
             headerTitle="配置列表"
             toolBarRender={() => [
-              <Button key="refreshConfig" onClick={() => this.refreshTable()}>刷新配置</Button>,
-              <Button key="addConfig"
-                      onClick={() => this.setState({
-                        modalShow: true,
-                        modalType: 'add',
-                        modalRecord: {}
-                      })}>新增配置</Button>,
+              <Button key="refreshConfig" onClick={() => this.refreshTable()}>
+                刷新配置
+              </Button>,
+              <Button
+                key="addConfig"
+                onClick={() =>
+                  this.setState({
+                    modalShow: true,
+                    modalType: 'add',
+                    modalRecord: {},
+                  })
+                }
+              >
+                新增配置
+              </Button>,
             ]}
           />
         </div>
 
-        <DdnsConfigForm modalShow={modalShow}
-                        modalType={modalType}
-                        changeShow={this.changeModalOpen}
-                        fromFields={modalRecord}
+        <DdnsConfigForm
+          modalShow={modalShow}
+          modalType={modalType}
+          changeShow={this.changeModalOpen}
+          fromFields={modalRecord}
         />
       </BaseLayout>
     );
   }
 
-
   // 数据列配置
   columns: ProColumns<DDNSConfigItem>[] = [
-    {
-      title: '顶级域名',
-      width: 80,
-      key: 'ddnsConfigKey_domainName',
-      dataIndex: 'ddnsConfigKey',
-      render: (_, item) => item.ddnsConfigKey.domainName,
-      sorter: (a, b) => (a.ddnsConfigKey.domainName > b.ddnsConfigKey.domainSubName ? 1 : -1),
-    },
     {
       title: '二级域名',
       width: 80,
@@ -123,14 +143,23 @@ export class ConfigMainComponent extends Component<any, any> {
       render: (_, item) => item.ddnsConfigKey.domainSubName,
     },
     {
+      title: '顶级域名',
+      width: 80,
+      key: 'ddnsConfigKey_domainName',
+      dataIndex: 'ddnsConfigKey',
+      render: (_, item) => item.ddnsConfigKey.domainName,
+      sorter: (a, b) =>
+        a.ddnsConfigKey.domainName > b.ddnsConfigKey.domainSubName ? 1 : -1,
+    },
+    {
       title: '服务商类型',
       width: 80,
       dataIndex: 'dnsServerType',
       valueEnum: {
-        all: {text: '全部'},
-        TENCENT: {text: '腾讯云'},
-        HUAWEI: {text: '华为云'},
-        ALIYUN: {text: '阿里云'},
+        all: { text: '全部' },
+        TENCENT: { text: '腾讯云' },
+        HUAWEI: { text: '华为云' },
+        ALIYUN: { text: '阿里云' },
       },
     },
     /*  {
@@ -155,17 +184,19 @@ export class ConfigMainComponent extends Component<any, any> {
       title: '启动状态',
       width: 80,
       dataIndex: 'activate',
-      render: (_, item) => <Switch checked={item.activate}
-                                   onChange={(newActivate, b) => {
-                                     item.activate = newActivate;
-                                     this.saveConfig(item);
-                                   }}
-      />,
+      render: (_, item) => (
+        <Switch
+          checked={item.activate}
+          onChange={(newActivate, b) => {
+            item.activate = newActivate;
+            this.saveConfig(item);
+          }}
+        />
+      ),
       valueEnum: {
-        true: {text: '启动'},
-        false: {text: '停止'},
+        true: { text: '启动' },
+        false: { text: '停止' },
       },
-
     },
     {
       title: '操作',
@@ -173,11 +204,48 @@ export class ConfigMainComponent extends Component<any, any> {
       key: 'option',
       valueType: 'option',
       render: (_, item) => [
-        //todo 待实现逻辑
-        <a key="update"
-           onClick={() => this.setState({modalShow: true, modalType: 'update', modalRecord: item})}
-        >修改</a>,
+        <Popconfirm
+          key="runNow"
+          title="立即运行DDNS"
+          description={`确定要立即运行 ${item.ddnsConfigKey.domainSubName}.${item.ddnsConfigKey.domainName} 的任务吗？`}
+          onConfirm={() => this.runNowConfig(item.ddnsConfigKey)}
+          okText="确定运行"
+          okButtonProps={{ type: 'primary' }}
+          cancelText="取消"
+        >
+          <Tooltip title="立即运行">
+            <Button
+              type="text"
+              icon={<PlayCircleOutlined />}
+              size="small"
+              style={{
+                color: '#52c41a',
+                transition: 'all 0.2s ease-in-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.2)';
+                e.currentTarget.style.color = '#389e0d';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.color = '#52c41a';
+              }}
+            />
+          </Tooltip>
+        </Popconfirm>,
 
+        <a
+          key="update"
+          onClick={() =>
+            this.setState({
+              modalShow: true,
+              modalType: 'update',
+              modalRecord: item,
+            })
+          }
+        >
+          修改
+        </a>,
 
         <Popconfirm
           title="删除任务配置"
@@ -186,16 +254,14 @@ export class ConfigMainComponent extends Component<any, any> {
             this.removeConfig(item.ddnsConfigKey);
           }}
           okText="删除"
-          okButtonProps={{danger: true}}
+          okButtonProps={{ danger: true }}
           cancelText="算了~"
         >
-          <a href="#" key="remove">删除</a>
-        </Popconfirm>
+          <a href="#" key="remove">
+            删除
+          </a>
+        </Popconfirm>,
       ],
     },
   ];
-
-
 }
-
-
