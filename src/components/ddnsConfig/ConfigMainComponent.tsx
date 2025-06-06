@@ -23,6 +23,32 @@ export class ConfigMainComponent extends Component<any, any> {
     this.refreshTable();
   }
 
+  /**
+   * 计算相对时间
+   * @param timestamp 时间戳
+   * @returns 相对时间字符串
+   */
+  getRelativeTime(timestamp: number | string | undefined): string {
+    if (!timestamp) return '未知';
+
+    const now = new Date().getTime();
+    const time = new Date(timestamp).getTime();
+    const diff = Math.floor((now - time) / 1000); // 秒数差
+
+    if (diff < 60) {
+      return `${diff}秒前`;
+    } else if (diff < 3600) {
+      const minutes = Math.floor(diff / 60);
+      return `${minutes}分钟前`;
+    } else if (diff < 86400) {
+      const hours = Math.floor(diff / 3600);
+      return `${hours}小时前`;
+    } else {
+      const days = Math.floor(diff / 86400);
+      return `${days}天前`;
+    }
+  }
+
   refreshTable() {
     DdnsConfigManageService.queryAll()
       .then((resp) => {
@@ -66,6 +92,7 @@ export class ConfigMainComponent extends Component<any, any> {
     DdnsConfigManageService.runNow(key)
       .then(() => {
         message.success('立即运行成功！').then();
+        this.refreshTable();
       })
       .catch((e) => {
         message.error('立即运行失败！').then();
@@ -198,6 +225,52 @@ export class ConfigMainComponent extends Component<any, any> {
         false: { text: '停止' },
       },
     },
+    {
+      title: '最后IP',
+      width: 120,
+      dataIndex: 'lastIp',
+      render: (lastIp, item) => {
+        const relativeTime = this.getRelativeTime(item.lastQueryTime);
+        const actualTime = item.lastQueryTime
+          ? new Date(item.lastQueryTime).toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+          : '未知时间';
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span
+              style={{
+                fontWeight: '500',
+                color: '#1f1f1f',
+                fontSize: '14px',
+              }}
+            >
+              {lastIp || '无'}
+            </span>
+            <Tooltip title={`实际时间: ${actualTime}`} placement="top">
+              <span
+                style={{
+                  fontSize: '11px',
+                  color: '#8c8c8c',
+                  fontStyle: 'italic',
+                  cursor: 'help',
+                }}
+              >
+                {relativeTime}
+              </span>
+            </Tooltip>
+          </div>
+        );
+      },
+    },
+
     {
       title: '操作',
       width: 180,

@@ -1,11 +1,9 @@
-export type  DDNSConfigKey = {
-
+export type DDNSConfigKey = {
   domainName: string;
   domainSubName: string;
-}
+};
 
-
-export type  DDNSConfigItem = {
+export type DDNSConfigItem = {
   ddnsConfigKey: DDNSConfigKey;
   dnsServerType: string;
   dnsServerParam: string;
@@ -13,4 +11,6 @@ export type  DDNSConfigItem = {
   ddnsDomainRecordType: string;
   schedulerCron: string;
   activate: boolean;
-}
+  lastQueryTime?: number;
+  lastIp?: string;
+};
