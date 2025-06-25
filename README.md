@@ -7,6 +7,9 @@ ddns-general 项目链接:[http://localhost:3364/console ]
 ### 调试启动
 
 #### 1. 安装依赖,
+
+node推荐版本：v16.20.2
+
 ```bash
 $ yarn
 ```

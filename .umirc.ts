@@ -10,6 +10,7 @@ export default defineConfig({
     { path: '/welcome', component: '@/pages/welcome' },
     { path: '/ddnsConfig', component: '@/pages/DDNS/ConfigMain' },
     { path: '/ipchecker', component: '@/pages/IPCheckerPage' },
+    { path: '/msgnotifier', component: '@/pages/MsgNotifierPage' },
 
     {
       path: '/DDNS',
@@ -33,6 +34,12 @@ export default defineConfig({
           icon: 'SettingOutlined',
           name: '配置管理',
           component: '@/pages/IPCheckerPage',
+        },
+        {
+          path: '/DDNS/MsgNotifier',
+          icon: 'SettingOutlined',
+          name: '消息通知',
+          component: '@/pages/MsgNotifierPage',
         },
       ],
     },

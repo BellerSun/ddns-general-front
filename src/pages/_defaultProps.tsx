@@ -29,6 +29,11 @@ export default {
             name: 'IP检查',
             icon: 'https://gw.alipayobjects.com/zos/antfincdn/upvrAjAPQX/Logo_Tech%252520UI.svg',
           },
+          {
+            path: '/DDNS/MsgNotifier',
+            name: '消息通知',
+            icon: 'https://gw.alipayobjects.com/zos/antfincdn/upvrAjAPQX/Logo_Tech%252520UI.svg',
+          },
         ],
       },
     ],
