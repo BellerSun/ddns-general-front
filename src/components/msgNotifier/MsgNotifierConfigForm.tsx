@@ -9,9 +9,10 @@ import {
 import {
   MsgNotifierConfigItem,
   MsgNotifierTypeDTO,
+  MsgTypeDTO,
 } from '@/obj/MsgNotifierConfigItem';
 import MsgNotifierConfigManageService from '@/service/MsgNotifierConfigManageService';
-import { message, Button, Modal, Space } from 'antd';
+import { message, Button, Modal, Space, Card, Tag } from 'antd';
 import { FormInstance } from 'antd/es/form';
 
 type MsgNotifierConfigFormProps = {
@@ -39,12 +40,16 @@ type MsgNotifierConfigFormProps = {
 
 class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
   private formRef = React.createRef<FormInstance>();
+  private msgTemplateRef = React.createRef<any>();
 
   state = {
     testLoading: false,
     notifierTypes: [] as MsgNotifierTypeDTO[],
     notifierTypesLoading: false,
     currentHookDesc: '',
+    msgTypes: [] as MsgTypeDTO[],
+    msgTypesLoading: false,
+    currentMsgParams: {} as Record<string, string>,
   };
 
   constructor(props: MsgNotifierConfigFormProps) {
@@ -53,7 +58,9 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
 
   async componentDidMount() {
     await this.loadNotifierTypes();
+    await this.loadMsgTypes();
     this.updateHookDescFromInitialValue();
+    this.updateMsgParamsFromInitialValue();
   }
 
   /**
@@ -90,6 +97,36 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
   };
 
   /**
+   * 从初始值更新msgParams（用于编辑模式）
+   */
+  updateMsgParamsFromInitialValue() {
+    const { record } = this.props;
+    if (record?.msgType) {
+      this.updateMsgParams(record.msgType);
+    }
+  }
+
+  /**
+   * 根据msgType更新参数说明
+   */
+  updateMsgParams(msgTypeName: string) {
+    const { msgTypes } = this.state;
+    const selectedType = msgTypes.find((type) => type.name === msgTypeName);
+    if (selectedType) {
+      this.setState({
+        currentMsgParams: selectedType.params || {},
+      });
+    }
+  }
+
+  /**
+   * 处理msgType选择变化
+   */
+  handleMsgTypeChange = (value: string) => {
+    this.updateMsgParams(value);
+  };
+
+  /**
    * 加载通知器类型列表
    */
   async loadNotifierTypes() {
@@ -117,6 +154,36 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
       message.error('加载通知器类型失败');
     } finally {
       this.setState({ notifierTypesLoading: false });
+    }
+  }
+
+  /**
+   * 加载消息类型列表
+   */
+  async loadMsgTypes() {
+    this.setState({ msgTypesLoading: true });
+    try {
+      const response = await MsgNotifierConfigManageService.getMsgTypes();
+      const msgTypes = response.data || [];
+      this.setState({ msgTypes });
+
+      // 如果有初始值，更新参数说明
+      const { record } = this.props;
+      if (record?.msgType) {
+        const selectedType = msgTypes.find(
+          (type: MsgTypeDTO) => type.name === record.msgType,
+        );
+        if (selectedType) {
+          this.setState({
+            currentMsgParams: selectedType.params || {},
+          });
+        }
+      }
+    } catch (error) {
+      console.error('加载消息类型失败：', error);
+      message.error('加载消息类型失败');
+    } finally {
+      this.setState({ msgTypesLoading: false });
     }
   }
 
@@ -292,7 +359,14 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
 
   render() {
     const { modalType, record } = this.props;
-    const { notifierTypes, notifierTypesLoading, currentHookDesc } = this.state;
+    const {
+      notifierTypes,
+      notifierTypesLoading,
+      currentHookDesc,
+      msgTypes,
+      msgTypesLoading,
+      currentMsgParams,
+    } = this.state;
 
     // 将通知器类型转换为下拉选项
     const notifierTypeOptions = (notifierTypes || []).map(
@@ -301,6 +375,12 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
         value: type.name,
       }),
     );
+
+    // 将消息类型转换为下拉选项
+    const msgTypeOptions = (msgTypes || []).map((type: MsgTypeDTO) => ({
+      label: `${type.displayName}`,
+      value: type.name,
+    }));
 
     return (
       <ModalForm<MsgNotifierConfigItem>
@@ -349,17 +429,22 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
           ]}
         />
 
-        <ProFormText
+        <ProFormSelect
           name="msgType"
           label="消息类型"
-          placeholder="请输入消息类型，如：DDNS_UPDATE、IP_CHANGE等"
+          placeholder="请选择消息类型"
+          options={msgTypeOptions}
+          fieldProps={{
+            loading: msgTypesLoading,
+            onChange: this.handleMsgTypeChange,
+          }}
           rules={[
             {
               required: true,
               message: '消息类型为必填项',
             },
           ]}
-          tooltip="用于标识消息的类型，通常是事件类型或通知类型"
+          tooltip="选择消息的类型，不同类型支持不同的参数占位符"
         />
 
         <ProFormSelect
@@ -392,10 +477,94 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
           ]}
         />
 
+        {/* 消息参数提示区域 */}
+        {Object.keys(currentMsgParams).length > 0 && (
+          <Card
+            size="small"
+            title="🔖 可用参数占位符"
+            style={{ marginBottom: 16 }}
+            bodyStyle={{ padding: '8px 16px' }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {Object.entries(currentMsgParams).map(([key, desc]) => (
+                <Tag
+                  key={key}
+                  color="blue"
+                  style={{ margin: 0, cursor: 'pointer' }}
+                  onClick={() => {
+                    // 点击标签在光标位置插入到msgTemplate中
+                    const formRef = this.formRef.current;
+                    const textareaRef = this.msgTemplateRef.current;
+
+                    if (!formRef || !textareaRef) return;
+
+                    const placeholder = `\${${key}}`;
+
+                    // 获取textarea元素（优化：直接使用最常见的方式）
+                    const textareaElement =
+                      textareaRef.resizableTextArea?.textArea ||
+                      textareaRef.querySelector?.('textarea') ||
+                      textareaRef;
+
+                    if (
+                      textareaElement &&
+                      textareaElement.tagName === 'TEXTAREA'
+                    ) {
+                      const start = textareaElement.selectionStart || 0;
+                      const end = textareaElement.selectionEnd || 0;
+                      const currentTemplate =
+                        formRef.getFieldValue('msgTemplate') || '';
+
+                      // 在光标位置插入占位符
+                      const newTemplate =
+                        currentTemplate.slice(0, start) +
+                        placeholder +
+                        currentTemplate.slice(end);
+
+                      // 更新表单值
+                      formRef.setFieldsValue({
+                        msgTemplate: newTemplate,
+                      });
+
+                      // 立即设置光标位置（移除setTimeout避免卡顿）
+                      const newCursorPos = start + placeholder.length;
+                      textareaElement.setSelectionRange(
+                        newCursorPos,
+                        newCursorPos,
+                      );
+                      textareaElement.focus();
+                    } else {
+                      // 回退方案：末尾插入
+                      const currentTemplate =
+                        formRef.getFieldValue('msgTemplate') || '';
+                      formRef.setFieldsValue({
+                        msgTemplate: currentTemplate + placeholder,
+                      });
+                    }
+                  }}
+                  title={`点击插入 \${${key}} 占位符`}
+                >
+                  {`\${${key}}`} - {desc}
+                </Tag>
+              ))}
+            </div>
+            <div
+              style={{
+                fontSize: '12px',
+                color: '#666',
+                marginTop: '8px',
+                fontStyle: 'italic',
+              }}
+            >
+              💡 点击上方标签可自动插入对应的占位符到消息模板中
+            </div>
+          </Card>
+        )}
+
         <ProFormTextArea
           name="msgTemplate"
           label="消息模板"
-          placeholder="请输入消息模板，支持占位符如：{ip}、{time}等"
+          placeholder="请输入消息模板，在上方选择消息类型后可查看可用的占位符参数"
           rules={[
             {
               required: true,
@@ -404,6 +573,7 @@ class MsgNotifierConfigForm extends Component<MsgNotifierConfigFormProps, any> {
           ]}
           fieldProps={{
             rows: 4,
+            ref: this.msgTemplateRef,
           }}
           tooltip="消息的模板内容，可以使用占位符来动态替换内容"
         />
